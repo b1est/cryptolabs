@@ -1,10 +1,7 @@
 import math
 import pandas as pd
 import numpy as np
-import sys
 from functools import partial
-
-
 
 class Text:
     new_simbol = '_'
@@ -17,7 +14,7 @@ class Text:
         self.h2 = 0
 
     def LetFreq(self, space = True, sp = False):
-        with open('text2.txt', 'r', encoding = "utf-8") as f: 
+        with open('ModText.txt', 'r', encoding = "utf-8") as f: 
             keys = self.freq1.keys()  
             if self.sp == False:
                 for char in iter(partial(f.read, 1), ''):
@@ -38,7 +35,7 @@ class Text:
                     self.freq1['_'] = 0
                     
     def BigramFreq(self, space = True):
-        with open('text2.txt', 'r', encoding = "utf-8") as f:
+        with open('ModText.txt', 'r', encoding = "utf-8") as f:
             keys = self.freq1.keys()
             for char in iter(partial(f.read, 2), ''):
                 if len(char) == 2:
@@ -70,13 +67,12 @@ class Text:
                     else:
                         for key in keys:
                             self.freq2['_'][key] = 0
+
     def freqq(self, space = True):
         self.LetFreq(space)
         f1 = self.freq1
-        
         self.freq1 = {'_': 0, 'а': 0, 'б': 0, 'в': 0, 'г': 0, 'д': 0, 'е': 0, 'ё': 0, 'ж': 0, 'з': 0, 'и': 0, 'й': 0, 'к': 0, 'л': 0, 'м': 0, 'н': 0, 'о': 0, 'п': 0, 'р': 0, 'с': 0, 'т': 0, 'у': 0, 'ф': 0, 'х': 0, 'ц': 0, 'ч': 0, 'ш': 0, 'щ': 0, 'ъ': 0, 'ы': 0, 'ь': 0, 'э': 0, 'ю': 0, 'я': 0}
-        self.BigramFreq(space)
-         
+        self.BigramFreq(space) 
         self.freq1 = f1   
         del f1  
 
@@ -100,7 +96,7 @@ class Text:
 
     def change_text(self):
         with open('text.txt', 'r', encoding = "utf-8") as f:
-            with open('text2.txt', 'w', encoding = "utf-8") as fw:
+            with open('ModText.txt', 'w', encoding = "utf-8") as fw:
                 for char in iter(partial(f.read, 3), ''):
                     for i in char:
                         if i != '.' or i != '?' or i != ',' or i != '!' or  i != '-' or i != '(' or i != ')' or i != '{' or i != '}' or i != ':' or i != ';':
@@ -110,7 +106,7 @@ class Text:
                                 fw.write(i.lower())
                         if i == '.' or i == '?' or i == ',' or i == '!' or  i == '-' or i == '(' or i == ')' or i == '{' or i == '}' or i == ':' or i == ';' or i == '\n' or (i.lower() >= 'a' and i.lower() <= 'z') or i == '«' or  i == '»':
                             fw.write('')
-            with open('text2.txt', 'r+', encoding = "utf-8") as ff:
+            with open('ModText.txt', 'r+', encoding = "utf-8") as ff:
                 for char in iter(partial(ff.read, 1), ''):
                     self.tlen += 1
                     
@@ -128,16 +124,13 @@ class Text:
 def dataToList(data):
     return [list(data[i].values()) for i in data.keys()]
 
-
-
 def TableMacker(data, write = False):  
     keysData = data.freq1.keys()
     table = pd.DataFrame(np.array(list(dataToList(data.freq2))), dtype = np.float64, columns = keysData)
     table.to_csv('table.csv', encoding = 'utf-8')
     if write == True:
         print(table)
-        
-    
+           
 def main():
     tt = Text()
     tt.change_text() 
@@ -146,7 +139,6 @@ def main():
     tt.H2()
     print(f'H1 = {tt.getH1()}\nH2 = {tt.getH2()}')
     print(f'R1 = {tt.redundancy()[0]}\nR2 = {tt.redundancy()[1]}')
-
     TableMacker(tt)  # True, чтобы нарисовать таблицу
 
 if __name__ == "__main__":
