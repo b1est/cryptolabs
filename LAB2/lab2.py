@@ -1,10 +1,13 @@
 from functools import partial
+from collections import Counter, OrderedDict
+from re import findall, compile, sub
 
 freq_lang = { 'а': 0.05688278772138105, 'б': 0.014859120359571217, 'в': 0.030532916015332607, 'г': 0.016335284144120932, 'д': 0.023005873321472962, 'е': 0.0616890238170671,  'ж': 0.008106715500764193, 'з': 0.020988333431976352, 'и': 0.0002715584320633915, 'й': 0.015726018431158197, 'к': 0.03521729896842611, 'л': 0.0266040225463129, 'м': 0.03507629747485473, 'н': 0.05343956606355164, 'о': 0.09688369291615459, 'п': 0.015903575867507336, 'р': 0.04320216132659776, 'с': 0.05857828716259735, 'т': 0.05697504795791541, 'у': 0.03338427955199822, 'ф': 0.000738081892274859, 'х': 0.006888184074838719, 'ц': 0.001808648787909383, 'ч': 0.01609331861811573, 'ш': 0.0064860687042833124, 'щ': 0.0031455518380676182, 'ъ': 0.0003620779094178553, 'ы': 0.021373041210732826, 'ь': 0.02371958458522931, 'э': 0.0043327495987550094, 'ю': 0.008096270945684832, 'я': 0.03439914215387615}
 amount_of_letters = {'а': 0, 'б': 0, 'в': 0, 'г': 0, 'д': 0, 'е': 0, 'ж': 0, 'з': 0, 'и': 0, 'й': 0, 'к': 0, 'л': 0, 'м': 0, 'н': 0, 'о': 0, 'п': 0, 'р': 0, 'с': 0, 'т': 0, 'у': 0, 'ф': 0, 'х': 0, 'ц': 0, 'ч': 0, 'ш': 0, 'щ': 0, 'ъ': 0, 'ы': 0, 'ь': 0, 'э': 0, 'ю': 0, 'я': 0}
 AllComplianceIndex = {}
 comp_indexx = {}
-varints = {1: 'CryptedTextVariant1', 2: 'CryptedTextVariant2'}
+varints = {1: 'CryptedTextVariant1', 2: 'CryptedTextVariant2', 15: 'CryptedTextVariant15'}
+varints_keys = {1: 'вшекспирбуря', 2: 'последнийдозор', 15: 'посняковандрей'}
 m = {'а': 0, 'б': 0, 'в': 0, 'г': 0, 'д': 0, 'е': 0, 'ж': 0, 'з': 0, 'и': 0, 'й': 0, 'к': 0, 'л': 0, 'м': 0, 'н': 0, 'о': 0, 'п': 0, 'р': 0, 'с': 0, 'т': 0, 'у': 0, 'ф': 0, 'х': 0, 'ц': 0, 'ч': 0, 'ш': 0, 'щ': 0, 'ъ': 0, 'ы': 0, 'ь': 0, 'э': 0, 'ю': 0, 'я': 0}
 
 def reSetAmountOfLetters():
@@ -15,12 +18,10 @@ def SpliceText(length, file):
     parts = []
     buff = ''
     with open(file, 'r', encoding='utf-8') as f:
-        for line in f.read():
-            buff += line
+        for ch in iter(partial(f.read, 1), ''):
+            buff += ch
     for i in range(0, length):
-        part = ''
-        for symbol in range(i, len(buff), length):
-            part += buff[symbol]
+        part = buff[i::length]
         parts.append(part)
     return parts
 
@@ -69,22 +70,36 @@ def FindLengthOfKey():
 
 def FindKeyByCommonLet(file, keyslen):
     file += '.txt'
+    
+    freq_lang_t = OrderedDict(sorted(freq_lang.items(), key=lambda t: t[1], reverse=True))
+    freq_langg = {}
+    for el in freq_lang_t:
+        freq_langg[el] = freq_lang_t[el]
+    pos_keys = []
+    MostCommonLettersInParts = []
     for key in keyslen:
         part = SpliceText(key, file)
         key_letter = ''
         for i in range(0, key):
-            reSetAmountOfLetters()
-            for j in part[i]:
-                amount_of_letters[j] += 1
+                
+            freq_of_let = Counter(part[i])
+            freq_of_let = OrderedDict(sorted(freq_of_let.items(), key=lambda t: t[1], reverse=True))
+            freq_of_lets = {}
+            for el in freq_of_let:
+                freq_of_lets[el] = freq_of_let[el] / len(part[i])
+                
+            MostCommonLettersInParts.append(max(freq_of_lets, key=freq_of_lets.get))
             
-            MostCommonLetter = 'а'
-            for let, val in amount_of_letters.items():
-                if val > amount_of_letters[MostCommonLetter]:
-                    MostCommonLetter = let
-            
-            
-            key_letter += getChar((getIndex(MostCommonLetter) - getIndex('о')) % 32)
-        return key_letter
+        for let in freq_langg.keys():
+            key = ''
+            for mcl in MostCommonLettersInParts:
+                key += getChar((getIndex(mcl)-getIndex(let)) % 32)
+                
+            pos_keys.append(key)
+    return pos_keys
+
+
+                
 
 def getIndex(ch): 
     if ch == 'а':
@@ -152,7 +167,7 @@ def getIndex(ch):
     elif ch == 'я':
         return 31
     else:
-        print('Нет индекса для введенной буквы.')
+        print(f'Нет индекса для {ch}.')
     
 def getChar(i):
     if i == 0:
@@ -222,7 +237,7 @@ def getChar(i):
     else:
         print('Нет буквы для введенного индекса.')
 
-def encrypt(ef = '', keyy = None):
+def encrypt(ef = '', keyy = None, convertShow = True):
     try:
         ef += '.txt'
         if keyy == None:
@@ -262,13 +277,15 @@ def encrypt(ef = '', keyy = None):
                                     for i in range(intLenOfKey):
                                         if char[i] >= 'a' and char[i] <= 'я':
                                             newChar = getChar((getIndex(char[i]) + getIndex(listKey[i])) % 32)
-                                            print(f'{char[i]} ==> {newChar}')
+                                            if convertShow:
+                                                print(f'{char[i]} ==> {newChar}')
                                             etf.write(newChar)
                                 else:
                                     for i in range(len(char)):
                                         if char[i] >= 'a' and char[i] <= 'я':
                                             newChar = getChar((getIndex(char[i]) + getIndex(listKey[i])) % 32)
-                                            print(f'{char[i]} ==> {newChar}')
+                                            if convertShow:
+                                                print(f'{char[i]} ==> {newChar}')
                                             etf.write(newChar)
                         
                         count_let(ef)    
@@ -303,7 +320,7 @@ def FindKeyByM(file, keyslen):
                 amount_of_letters[j] += 1
             for k in freq_lang.keys():
                 M(k)  
-            maxx = m['а']
+            maxx = m['о']
             letindex = 0
             for i in m.keys():
                 if maxx < m[i]:
@@ -312,7 +329,7 @@ def FindKeyByM(file, keyslen):
             key_letter += getChar(letindex)
         return key_letter
 
-def decrypt(key, variant):
+def decrypt(key, variant, convertShow = True):
     print('KEY =', key)
     key = list(key)
     variant += '.txt'
@@ -323,42 +340,46 @@ def decrypt(key, variant):
                     for i in range(len(key)):
                         if char[i] >= 'a' and char[i] <= 'я':
                             newChar = getChar((getIndex(char[i]) + 32 - getIndex(key[i])) % 32)
-                            print(f'{newChar} <== {char[i]}')
+                            if convertShow:
+                                print(f'{newChar} <== {char[i]}')
                             w.write(newChar)
                 else:
                     for i in range(len(char)):
                         if char[i] >= 'a' and char[i] <= 'я':
                             newChar = getChar((getIndex(char[i]) + 32 - getIndex(key[i])) % 32)
-                            print(f'{newChar} <== {char[i]}')
+                            if convertShow:
+                                print(f'{newChar} <== {char[i]}')
                             w.write(newChar)
 
 def main(): 
-    encrypt('Enc2Text2',  'да')
-    encrypt('Enc3Text2',  'нет')
-    encrypt('Enc4Text2',  'пока')
-    encrypt('Enc5Text2',  'тесла')
-    encrypt('Enc10Text2', 'абитуриент')
-    encrypt('Enc11Text2', 'абонентский')
-    encrypt('Enc12Text2', 'абонементный')
-    encrypt('Enc13Text2', 'млекопитающие')
-    encrypt('Enc14Text2', 'безобразничать')
-    encrypt('Enc15Text2', 'безостановочный')
-    encrypt('Enc16Text2', 'времяпровождение')
-    encrypt('Enc17Text2', 'контрреволюционер')
-    encrypt('Enc18Text2', 'сверхъестественный')
-    encrypt('Enc19Text2', 'усовершенствоваться')
-    encrypt('Enc20Text2', 'женоненавистничество')
-    print(comp_indexx)
-
-    AllKeys(varints[1])
+    #encrypt('Enc2Text2',  'да', False)
+    #encrypt('Enc3Text2',  'нет', False)
+    #encrypt('Enc4Text2',  'пока', False)
+    #encrypt('Enc5Text2',  'тесла', False)
+    #encrypt('Enc10Text2', 'абитуриент', False)
+    #encrypt('Enc11Text2', 'абонентский', False)
+    #encrypt('Enc12Text2', 'абонементный', False)
+    #encrypt('Enc13Text2', 'млекопитающие', False)
+    #encrypt('Enc14Text2', 'безобразничать', False)
+    #encrypt('Enc15Text2', 'безостановочный', False)
+    #encrypt('Enc16Text2', 'времяпровождение', False)
+    #encrypt('Enc17Text2', 'контрреволюционер', False)
+    #encrypt('Enc18Text2', 'сверхъестественный', False)
+    #encrypt('Enc19Text2', 'усовершенствоваться', False)
+    #encrypt('Enc20Text2', 'женоненавистничество', False)
+    #print(comp_indexx)
+    var = 2
+    AllKeys(varints[var])
     lengg = FindLengthOfKey()
+  
     print(lengg)
-    key = FindKeyByCommonLet(varints[1], lengg)
+    key = FindKeyByCommonLet(varints[var], lengg)
     print(key)
-    key = FindKeyByM(varints[1], lengg)
+    key = FindKeyByM(varints[var], lengg)
     print(key)
-    decrypt(key, varints[1])
-    print(key)
+    key = varints_keys[var]
+
+    #decrypt(key, varints[var], False)
 
 if __name__ == "__main__":
     main()

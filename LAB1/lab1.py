@@ -146,7 +146,7 @@ def TableMacker(data, write = False):
 def main():
     tt = Text()
     tt.change_text() 
-    tt.freqq(False, True)
+    tt.freqq(True, True)
     tt.H1()
     tt.H2()
     print(f'H1 = {tt.getH1()}\nH2 = {tt.getH2()}')
