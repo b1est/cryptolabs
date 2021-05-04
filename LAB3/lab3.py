@@ -1,7 +1,9 @@
-from collections import Counter  # a = 17 b = 94
+from collections import Counter  
 from functools import partial
-from os import stat, system
 import math
+variant = 15
+variants = {2: "02.txt", 15: "15.txt"}
+
 most_coommon_bigram_in_lang = ['ст', 'но', 'ен', 'то', 'на', 'ов', 'ни', 'ра', 'во', 'ко']
 pos_keys=[]
 m = 31
@@ -32,7 +34,7 @@ def linear_comparison(a, b, n):                             # Розв’язк�
 #2
 def BigramFreq():
     f = {}
-    with open('02.txt', 'r', encoding = "utf-8") as r:
+    with open(variants[variant], 'r', encoding = "utf-8") as r:
         for char in iter(partial(r.read, 2), ''):
             if not char in f.keys():
                 f[char] = 1
@@ -104,9 +106,9 @@ def getIndex(ch):
     elif ch == 'щ': 
         return 25
     elif ch == 'ь':
-        return 27
-    elif ch == 'ы':
         return 26
+    elif ch == 'ы':
+        return 27
     elif ch == 'э':
         return 28
     elif ch == 'ю':
@@ -114,7 +116,8 @@ def getIndex(ch):
     elif ch == 'я':
         return 30
     else:
-        print('Нет индекса для введенной буквы.')   
+        print('Нет индекса для введенной буквы.') 
+  
 def getChar(i):
     if i == 0:
         return 'а'
@@ -168,9 +171,9 @@ def getChar(i):
         return 'ш'
     elif i == 25: 
         return 'щ'
-    elif i == 26:
-        return 'ы'
     elif i == 27:
+        return 'ы'
+    elif i == 26:
         return 'ь'
     elif i == 28:
         return 'э'
@@ -212,14 +215,14 @@ def keys_find(lang, cypher, pos_keys):
                     r = linear_comparison(x, y, m2)
                     if isinstance(r, int):
                         if r > 0 and r < m2 and extended_euclid(r, m)[2] == 1:
-                            b = (most_coommon_bigram_in_cyphertext_list[cypher1] - r * most_coommon_bigram_in_lang_list[lang1]) % m2
+                            b = most_coommon_bigram_in_cyphertext_list[cypher1] - r * most_coommon_bigram_in_lang_list[lang1] % m2
                             key = (r, b)
                             if b >= 0 and b < m2:
                                 pos_keys.append(key)
                     if isinstance(r, list):
                         for a in r:
                             if a > 0 and a < m2 and extended_euclid(a, m)[2] == 1:
-                                b = (most_coommon_bigram_in_cyphertext_list[cypher1] - a * most_coommon_bigram_in_lang_list[lang1]) % m2
+                                b = most_coommon_bigram_in_cyphertext_list[cypher1] - a * most_coommon_bigram_in_lang_list[lang1] % m2
                                 key = (a, b)
                                 if b >= 0 and b < m2:
                                     pos_keys.append(key)
@@ -232,35 +235,35 @@ def decr(keys):
     impossible_russian_bigrams_val = BiValBigMacker(impossible_russian_bigrams)
     bigramtext = []
     
-    with open('02.txt', 'r', encoding='utf-8') as v:
+    with open(variants[variant], 'r', encoding='utf-8') as v:
         for char in iter(partial(v.read, 2), ''):
                 bigramtext.append(char)
     bigramtext_val = BiValBigMacker(bigramtext)
-    for i in keys:
-        print(f'\nKEY: {i}')
-        a, b = i
-        dtext = ''
-        opp_a = extended_euclid(a, m*m)[0]
-        for j in range(len(bigramtext_val)):
-            bigram_value = opp_a * (bigramtext_val[j] - b ) % m2
-            bigram = ValToBigram(bigram_value)
-            if bigram_value in impossible_russian_bigrams_val:
-                print(f"Знайдено неможливу біграму: {bigram}")
-                break      
-            dtext += bigram
-            if j == len(bigramtext_val)-1:
-                if list(x[0] for x in Counter(dtext).most_common(3)) == ['о', 'а', 'е']:
-                    print(dtext)
-                    print(Counter(dtext))
-                elif list(x[0] for x in Counter(dtext).most_common(2)) == ['о', 'а']:
-                    print(dtext)
-                    print(Counter(dtext))
-                elif list(x[0] for x in Counter(dtext).most_common(1)) == ['о']:
-                    print(dtext)
-                    print(Counter(dtext))
+    with open('decryption.txt', 'w', encoding='utf-8') as w:
+        for i in keys:
+            w.write(f'\nKEY: {i}\n')
+            a, b = i
+            dtext = ''
+            opp_a = extended_euclid(a, m*m)[0]
+            for j in range(len(bigramtext_val)):
+                bigram_value = opp_a * (bigramtext_val[j] - b ) % m2
+                bigram = ValToBigram(bigram_value)
+                if bigram_value in impossible_russian_bigrams_val:
+                    w.write(f"Знайдено неможливу біграму: {bigram}\n")
+                    dtext += bigram
+                    break
                 else:
-                    print(f'Помилка частотного аналізу: {list(x[0] for x in Counter(dtext).most_common(5))}')
-        print(dtext)      
+                    dtext += bigram
+                if j == len(bigramtext_val)-1:
+                    if list(x[0] for x in Counter(dtext).most_common(3)) == ['о', 'а', 'е']:
+                        w.write('Разшифрованый текст:\n'+ dtext)    
+                    elif list(x[0] for x in Counter(dtext).most_common(2)) == ['о', 'а']:
+                        w.write('Разшифрованый текст:\n'+ dtext)   
+                    elif list(x[0] for x in Counter(dtext).most_common(1)) == ['о']:
+                        w.write('Разшифрованый текст:\n'+ dtext)
+                    else:
+                        w.write(f'Помилка частотного аналізу: {list(x[0] for x in Counter(dtext).most_common(5))}')
+            w.write(dtext)      
                     
 
 
@@ -273,7 +276,7 @@ def decr(keys):
 
 def main(): 
     bigram_in_cyphertext = BigramFreq()
-    most_coommon_bigram_in_cyphertext = MostCommon(bigram_in_cyphertext, 20)
+    most_coommon_bigram_in_cyphertext = MostCommon(bigram_in_cyphertext, 10)
     keys = keys_find(most_coommon_bigram_in_lang, most_coommon_bigram_in_cyphertext, pos_keys)
     decr(keys)
     
