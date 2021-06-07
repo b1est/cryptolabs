@@ -6,8 +6,8 @@ freq_lang = { 'а': 0.05688278772138105, 'б': 0.014859120359571217, 'в': 0.030
 amount_of_letters = {'а': 0, 'б': 0, 'в': 0, 'г': 0, 'д': 0, 'е': 0, 'ж': 0, 'з': 0, 'и': 0, 'й': 0, 'к': 0, 'л': 0, 'м': 0, 'н': 0, 'о': 0, 'п': 0, 'р': 0, 'с': 0, 'т': 0, 'у': 0, 'ф': 0, 'х': 0, 'ц': 0, 'ч': 0, 'ш': 0, 'щ': 0, 'ъ': 0, 'ы': 0, 'ь': 0, 'э': 0, 'ю': 0, 'я': 0}
 AllComplianceIndex = {}
 comp_indexx = {}
-varints = {1: 'CryptedTextVariant1', 2: 'CryptedTextVariant2', 15: 'CryptedTextVariant15'}
-varints_keys = {1: 'вшекспирбуря', 2: 'последнийдозор', 15: 'посняковандрей'}
+varints = { 2: 'CryptedTextVariant2', 15: 'CryptedTextVariant15'}
+varints_keys = { 2: 'последнийдозор', 15: 'посняковандрей'}
 m = {'а': 0, 'б': 0, 'в': 0, 'г': 0, 'д': 0, 'е': 0, 'ж': 0, 'з': 0, 'и': 0, 'й': 0, 'к': 0, 'л': 0, 'м': 0, 'н': 0, 'о': 0, 'п': 0, 'р': 0, 'с': 0, 'т': 0, 'у': 0, 'ф': 0, 'х': 0, 'ц': 0, 'ч': 0, 'ш': 0, 'щ': 0, 'ъ': 0, 'ы': 0, 'ь': 0, 'э': 0, 'ю': 0, 'я': 0}
 
 def reSetAmountOfLetters():
@@ -67,14 +67,13 @@ def FindLengthOfKey():
                 keys.append(leng)
         tval -= 0.001
     return keys
-
+def DelMultipleLenOfKeys(l):
+    return [l[i] for i in range(len(l)) if i >= 0 if l[i] % l[i-1]]
 def FindKeyByCommonLet(file, keyslen):
     file += '.txt'
     
     freq_lang_t = OrderedDict(sorted(freq_lang.items(), key=lambda t: t[1], reverse=True))
-    freq_langg = {}
-    for el in freq_lang_t:
-        freq_langg[el] = freq_lang_t[el]
+    freq_langg = dict(freq_lang_t)
     pos_keys = []
     MostCommonLettersInParts = []
     for key in keyslen:
@@ -89,8 +88,8 @@ def FindKeyByCommonLet(file, keyslen):
                 freq_of_lets[el] = freq_of_let[el] / len(part[i])
                 
             MostCommonLettersInParts.append(max(freq_of_lets, key=freq_of_lets.get))
-            
-        for let in freq_langg.keys():
+         
+        for let in list(freq_langg.keys())[:5]:
             key = ''
             for mcl in MostCommonLettersInParts:
                 key += getChar((getIndex(mcl)-getIndex(let)) % 32)
@@ -292,7 +291,7 @@ def encrypt(ef = '', keyy = None, convertShow = True):
                         CompIndex = comp_index(intTextLen)
                         reSetAmountOfLetters()
                         print('KEY =', strKey)
-                        print('N =', intTextLen)
+                        #print('N =', intTextLen)
                         print('Compliance Index =', CompIndex)
                         comp_indexx[ef] = CompIndex
 
@@ -303,11 +302,14 @@ def encrypt(ef = '', keyy = None, convertShow = True):
     except:
         print('Ошибка №5\nНе удалось считать данные с text2.txt.')
 
-def M(g):
+def M(g, a):
     sum = 0
-    for let in freq_lang.keys():
-        sum += freq_lang[let] * amount_of_letters[getChar((getIndex(g)+getIndex(let)) % 32)]
+    freq = OrderedDict(sorted(freq_lang.items(), key=lambda t: t[1], reverse=True))
+    freq = dict(freq)
+    for let in freq.keys():
+        sum += freq[let] * a[getChar((getIndex(g)+getIndex(let)) % 32)]
     m[g] = sum
+    
     
 def FindKeyByM(file, keyslen):
     file += '.txt'
@@ -315,13 +317,11 @@ def FindKeyByM(file, keyslen):
         part = SpliceText(key, file)
         key_letter = ''
         for i in range(0, key):
-            reSetAmountOfLetters()
-            for j in part[i]:
-                amount_of_letters[j] += 1
+            amount = Counter(part[i])
             for k in freq_lang.keys():
-                M(k)  
+                M(k, amount)  
             maxx = m['о']
-            letindex = 0
+            letindex = getIndex('о')
             for i in m.keys():
                 if maxx < m[i]:
                     maxx = m[i]
@@ -333,6 +333,16 @@ def decrypt(key, variant, convertShow = True):
     print('KEY =', key)
     key = list(key)
     variant += '.txt'
+    intTextLen = 0
+    with open(variant, 'r', encoding='utf-8') as f:
+        for char in iter(partial(f.read, 10), ''):
+            for i in char:
+                if i.lower() >= 'a' and i.lower() <= 'я':
+                    intTextLen += 1
+    count_let(variant)
+    CompIndex = comp_index(intTextLen)
+    reSetAmountOfLetters()
+    print(f'Compliance Index = {CompIndex}')
     with open(variant, 'r', encoding='utf-8') as f:
         with open('decrtext.txt', 'w',  encoding='utf-8') as w:
             for char in iter(partial(f.read, len(key)), ''):
@@ -371,7 +381,8 @@ def main():
     var = 15
     AllKeys(varints[var])
     lengg = FindLengthOfKey()
-  
+    print(lengg) 
+    lengg = DelMultipleLenOfKeys(lengg)
     print(lengg)
     key = FindKeyByCommonLet(varints[var], lengg)
     print(key)
@@ -379,7 +390,7 @@ def main():
     print(key)
     key = varints_keys[var]
 
-    #decrypt(key, varints[var], False)
+    decrypt(key, varints[var], False)
 
 if __name__ == "__main__":
     main()

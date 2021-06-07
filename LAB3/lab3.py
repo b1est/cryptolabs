@@ -188,7 +188,12 @@ def BiValBigMacker(bigram):
     for gr in bigram:
         tmp.append(m*getIndex(gr[0]) + getIndex(gr[1]))
     return tmp
-
+def MonoToValSort(mono):
+    tmp = []
+    for i in mono:
+        tmp.append(getIndex(i))
+    tmp.sort()
+    return tmp
 def ValToBigram(bigram):
     big = ''
     second = bigram%m
@@ -228,13 +233,17 @@ def keys_find(lang, cypher, pos_keys):
                                     pos_keys.append(key)
     pos_keys = list(set(pos_keys))
     return pos_keys
-   
+ 
 
 def decr(keys):
     impossible_russian_bigrams = ["аь", "оь", "еь", "иь", "уь", "оь", "щй", "щф", "щх", "щц", "щч", "щш", "щщ"]
     impossible_russian_bigrams_val = BiValBigMacker(impossible_russian_bigrams)
     bigramtext = []
-    
+    #most_coom_let = ['о', 'а', 'е', 'и', 'н'] 
+    #most_coom_let = MonoToValSort(most_coom_let)
+    less_com_let = ['ц', 'щ', 'ф']
+    less_com_let = MonoToValSort(less_com_let)
+
     with open(variants[variant], 'r', encoding='utf-8') as v:
         for char in iter(partial(v.read, 2), ''):
                 bigramtext.append(char)
@@ -255,14 +264,21 @@ def decr(keys):
                 else:
                     dtext += bigram
                 if j == len(bigramtext_val)-1:
-                    if list(x[0] for x in Counter(dtext).most_common(3)) == ['о', 'а', 'е']:
-                        w.write('Разшифрованый текст:\n'+ dtext)    
-                    elif list(x[0] for x in Counter(dtext).most_common(2)) == ['о', 'а']:
-                        w.write('Разшифрованый текст:\n'+ dtext)   
-                    elif list(x[0] for x in Counter(dtext).most_common(1)) == ['о']:
-                        w.write('Разшифрованый текст:\n'+ dtext)
+                    #moost_coom_five_let_in_text = list(x[0] for x in Counter(dtext).most_common(5))
+                    #mstcsorted = MonoToValSort(moost_coom_five_let_in_text)
+                    less_coom_let_in_text = list(x[0] for x in Counter(dtext).most_common(31))[28:]
+                    
+                    lcsorted = MonoToValSort(less_coom_let_in_text)
+                    
+    
+                    #if mstcsorted == most_coom_let and lcsorted == less_com_let:
+                    #    w.write('Разшифрованый текст:\n'+ dtext)
+                    
+                    if lcsorted == less_com_let:
+                        print(dtext)
+                        w.write('Разшифрованый текст:\n'+ dtext) 
                     else:
-                        w.write(f'Помилка частотного аналізу: {list(x[0] for x in Counter(dtext).most_common(5))}')
+                        w.write(f'Помилка частотного аналізу.')
             w.write(dtext)      
                     
 
@@ -276,8 +292,10 @@ def decr(keys):
 
 def main(): 
     bigram_in_cyphertext = BigramFreq()
-    most_coommon_bigram_in_cyphertext = MostCommon(bigram_in_cyphertext, 10)
+    most_coommon_bigram_in_cyphertext = MostCommon(bigram_in_cyphertext, 5)
     keys = keys_find(most_coommon_bigram_in_lang, most_coommon_bigram_in_cyphertext, pos_keys)
+    #print(keys)
+    #print(f'Len of keys: {len(keys)}')
     decr(keys)
     
 if __name__ == '__main__':

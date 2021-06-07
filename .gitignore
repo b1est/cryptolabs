@@ -1,0 +1,10 @@
+*.exe
+*.rar
+*.vscode
+*.pyc
+*.pyo
+*.log
+*.enc
+*.vcxproj*
+*.db
+*/Debug
