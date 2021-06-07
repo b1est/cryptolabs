@@ -1,17 +1,15 @@
 
 import math
 from scipy import special
+<<<<<<< HEAD
 import numpy as np
+=======
+>>>>>>> 6748446 (R refactor)
 import time
 
 
 
 
-def shift(xs, n):
-    if n >= 0:
-        return np.concatenate((np.full(n, np.nan, dtype = np.int64), xs[:-n]))
-    else:
-        return np.concatenate((xs[-n:], np.full(-n, np.nan, dtype = np.int64)))
 class Reg:
     def __init__(self, v):
         self.var = v
@@ -26,12 +24,14 @@ class Reg:
         self.n2 = 31
         self.n3 = 32
         self.n = N(self.n1)
+        
         self.masks = {
             self.n1: count_mask(self.n1),
             self.n2: count_mask(self.n2),
             self.n3: count_mask(self.n3),
             self.n: count_mask(self.n)
         }
+        self.zn = self.z & self.masks[self.n]
         self.c = C(self.n)
         print(f'N* = {self.n}')
         print(f'C = {self.c}') 
@@ -78,34 +78,28 @@ class Reg:
         self.l2 = xor << 30 | ((self.l2 >> 1) & self.masks[self.n2])
         return result    
 
+<<<<<<< HEAD
     def R(self, reg, z):
         start = time.perf_counter_ns()
+=======
+    def R(self, reg):
+>>>>>>> 6748446 (R refactor)
         r = 0
+        ri = reg
+        zi = self.zn
         for i in range(self.n):
+<<<<<<< HEAD
             r += ((reg >>(self.n-i-1))&1) ^ ((z >> (2047-i))&1)
             #r+=((reg[i]+int(z[i])))%2
         print(time.perf_counter_ns() - start)
+=======
+            ri >>= 1
+            zi >>= 1
+            r += (ri&1) ^ (zi&1)
+
+>>>>>>> 6748446 (R refactor)
         return r
 
-        
-    # def lfsr1iter(self, Lind):
-    #     xor = 0
-    #     if Lind == 1:
-    #         xor = np.mod(np.add(self.l1[0],np.add(self.l1[1], np.add(self.l1[4],self.l1[6]))),2)
-    #         a = self.l1[0]
-    #         self.l1 = shift(self.l1, -1)
-    #         self.l1[self.l1.size - 1] = xor
-    #     elif Lind == 2:
-    #         xor = np.mod(np.add(self.l2[0],self.l2[3]),2)
-    #         a = self.l2[0]
-    #         self.l2 = shift(self.l2, -1)
-    #         self.l2[self.l2.size - 1] = xor
-    #     elif Lind == 3:
-    #         xor = np.mod(np.add(self.l3[0],np.add(self.l3[1],np.add(self.l3[2],np.add(self.l3[3], np.add(self.l3[5],self.l3[7]))))),2)
-    #         a = self.l3[0]
-    #         self.l3 = shift(self.l3, -1)
-    #         self.l3[self.l3.size - 1] = xor
-    #     return a
     def geffe(self): 
         x = self.generate_x()
         y = self.generate_y()
@@ -119,13 +113,17 @@ class Reg:
         l1_count, l2_count = 0, 0
         print(bin(self.X))
         
+        start = time.time()
+
+        end = time.time()
+        print(end - start)
         while self.cn >= 0:
             print(self.cn)
             r1, r2 = 0, 0
-            r2 = self.R(self.Y, self.z)
+            r2 = self.R(self.Y)
             
             if self.cn >= self.cn1:
-                r1 = self.R(self.X, self.z)
+                r1 = self.R(self.X)
                 if r1 < self.c:
                     print("x: " +bin(self.l1))
                     l1_count+=1 
